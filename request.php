@@ -31,23 +31,25 @@ foreach ($client->parseEvents() as $event) {
                         preg_replace("/\r?\n/", "\\n", $text)
                     ]);
                 }
-                // else {
-                //     if($source["userId"] == "U9ab4918e564c4b73440b8e3388ead129") {
-                //         $req = new testAnalysis();
-                //         $check = $req->analysis($text);
-                //         goto end;
-                //     }
-                // }
-                // if($text == "!test") {
-                //     $client->pushMessage([
-                //         "to"        => "Cf45ea7ba7cb84bae903458d3184642a0",
-                //         "messages"  => [[
-                //             "type" => "text",
-                //             "text" => "測試測試，大家不要緊張"
-                //         ]]
-                //     ]);
-                //     goto end;
-                // }
+                /*
+                else {
+                    if($source["userId"] == "U9ab4918e564c4b73440b8e3388ead129") {
+                        $req = new testAnalysis();
+                        $check = $req->analysis($text);
+                        goto end;
+                    }
+                }
+                if($text == "!test") {
+                    $client->pushMessage([
+                        "to"        => "Cf45ea7ba7cb84bae903458d3184642a0",
+                        "messages"  => [[
+                            "type" => "text",
+                            "text" => "測試測試，大家不要緊張"
+                        ]]
+                    ]);
+                    goto end;
+                }
+                */
                 $cmd_check = mb_substr($text, 0, 1, "UTF-8");
                 if($cmd_check == "!" || $cmd_check == "！") {
                     $req = new judgmentAlgorithm($timestamp, $source);
@@ -63,22 +65,24 @@ foreach ($client->parseEvents() as $event) {
                     }
                 }
             break;
-            // case "image":
-            //     if($event["source"]["type"] == "group")
-            //         putmsg("image", $event["source"]["groupId"], $event["timestamp"], $event["message"]["id"]);
-            //     if(isset($event["message"]["id"])) {
-            //         $id = $event["message"]["id"];
-            //         $cont = $client->getContent($id);
-            //         $file_info = new finfo(FILEINFO_MIME_TYPE);
-            //         $mime_type = $file_info->buffer($cont);
-            //         $extpos = strpos($mime_type, '/');
-            //         $extension = "jpg";
-            //         if($extpos !== false) {
-            //             $extension = substr($mime_type, $extpos+1);
-            //         }
-            //         file_put_contents("./testImg/$id.$extension", $cont);
-            //     }
-            // break;
+            /*
+            case "image":
+                if($event["source"]["type"] == "group")
+                    putmsg("image", $event["source"]["groupId"], $event["timestamp"], $event["message"]["id"]);
+                if(isset($event["message"]["id"])) {
+                    $id = $event["message"]["id"];
+                    $cont = $client->getContent($id);
+                    $file_info = new finfo(FILEINFO_MIME_TYPE);
+                    $mime_type = $file_info->buffer($cont);
+                    $extpos = strpos($mime_type, '/');
+                    $extension = "jpg";
+                    if($extpos !== false) {
+                        $extension = substr($mime_type, $extpos+1);
+                    }
+                    file_put_contents("./testImg/$id.$extension", $cont);
+                }
+            break;
+            */
             case "sticker":
                 if (isset($event["source"]["groupId"]) && isset($event["message"]["stickerId"])) {
                     $ttt = new sticker();
@@ -94,10 +98,22 @@ foreach ($client->parseEvents() as $event) {
         }
         end:
         if($check) {
-            $client->replyMessage([
-                "replyToken"    => $event["replyToken"],
-                "messages"      => $req->getContent()
-            ]);
+            $content = $req->getContent();
+            if(!empty($content["reply"])) {
+                $client->replyMessage([
+                    "replyToken"    => $event["replyToken"],
+                    "messages"      => $content["reply"]
+                ]);
+            }
+            if(!empty($content["push"])) {
+                foreach ($content["push"] as $pushMsg) {
+                    sleep(5);
+                    $client->pushMessage([
+                        "to"            => $source["groupId"],
+                        "messages"      => $pushMsg
+                    ]);
+                }
+            }
         }
     }
 };
