@@ -7,7 +7,11 @@ define(_DICE, [
     "final" => "呦~"
 ]);
 define(_SEPAT, [
-    "start" => "諾諾幫:name大人擲第:time次骰～\n骰出的點數是...:dices！",
+    "create" => ":name大人開了一局十八啦～\n想參加的領主大人們可以輸入\"!十八啦\"一起玩喔～\n:name大人只要再輸入\"!十八啦開局\"就可以開始玩囉～",
+    "join" => ":name大人加入了十八啦～",
+    "start" => "十八啦開局囉～讓諾諾準備一下碗跟骰子～",
+    "reject" => "十八啦...現在沒有局的說～:name大人想玩的話可以輸入\"!十八啦\"來開局喔～",
+    "first" => "諾諾幫:name大人擲第:time次骰～\n骰出的點數是...:dices！\n",
     "same_color" => "哇哇！是一色呢！:name大人今天是歐洲人！",
     "d'count" => "唔～不算呢...諾諾再幫你骰一次！",
     "four_diff" => "唔～是無面，不算呢...諾諾再幫你骰一次！",
@@ -16,8 +20,8 @@ define(_SEPAT, [
     "BG" => "是...是...BG呢...",
     "pity" => "啊啊！好可惜，差一點就十八啦或是一色了呢～諾諾再幫你骰一次吧！",
     "identical" => "一色",
-    "best_player" => "這一場由:name獲得:score最高分！好厲害！",
-    "BG_player" => ":name大人BG了...下次一定會更好的！",
+    "best_player" => "這一場由:name大人獲得:score最高分！好厲害！",
+    "BG_player" => ":name大人這次BG了...下次一定會更好的！",
     "5time_player" => ":name大人擲了超過5次骰才成功，比一色的機率還低了呢～"
 ]);
 define(_EMO, [

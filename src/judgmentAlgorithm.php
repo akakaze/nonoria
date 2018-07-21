@@ -98,13 +98,26 @@ class judgmentAlgorithm extends msgFormat {
         $groupId = $this->source["groupId"];
         $userId = $this->source["userId"];
         $sepat = new sepat($groupId);
-        if(!$sepat->isGamblingExists()) {
+        $msgBuilder = new msgBuilder();
+        $check = $sepat->isGamblingExists();
+        if(!$check) {
             $sepat->createGambling();
         }
         $sepat->addPlayer($userId);
         
+        $name = "";//nickname->getNickName($userId)
+        $msgBuilder->addTag("name", $name);
+        if($check) {
+            $msgBuilder->addPrintText(_SEPAT["join"]);
+        }
+        else {
+            $msgBuilder->addPrintText(_SEPAT["create"]);
+        }
+        $print = $msgBuilder->buildeMsg();
+        $this->text($print);
         return true;
     }
+
     private function sepatGamblingStart() {
         $groupId = $this->source["groupId"];
         $sepat = new sepat($groupId);
@@ -119,6 +132,9 @@ class judgmentAlgorithm extends msgFormat {
                 "BGPlayer" => [],
                 "5timesPlayer" => []
             ];
+            $msgBuilder->addPrintText(_SEPAT["start"]);
+            $print = $msgBuilder->buildeMsg();
+            $this->text($print);
             foreach ($playerList as $playerId) {
                 $name = "";//nickname->getNickName($userId)
                 $dices = "";
@@ -141,7 +157,7 @@ class judgmentAlgorithm extends msgFormat {
                     $msgBuilder->addTag("time", $time);
                     $msgBuilder->addTag("dices", $dices);
                     $msgBuilder->addTag("score", $score);
-                    $msgBuilder->addPrintText(_SEPAT["start"]);
+                    $msgBuilder->addPrintText(_SEPAT["first"]);
                     switch($result["type"]) {
                         case sepat::_SAME_COLOR:
                             $msgBuilder->addPrintText(_SEPAT["same_color"]);
@@ -184,6 +200,7 @@ class judgmentAlgorithm extends msgFormat {
                 }
                 if($score == $scoreboard["bestScore"]) {
                     $scoreboard["bestPlayer"][] = $name;
+                    continue;
                 }
                 if($score == 3) {
                     $scoreboard["BGPlayer"][] = $name;
@@ -201,33 +218,95 @@ class judgmentAlgorithm extends msgFormat {
                     "size" => "lg",
                     "align" => "center",
                     "weight" => "bold"
-                ]
-            ];
-            $body = [
-                "type" => "box",
-                "layout" => "vertical",
-                "contents" => [
-                    [
-                        "type" => "box",
-                        "layout" => "horizontal",
-                        "contents" => [
-                            [
-                                "type" => "text",
-                                "text" => "玩家",
-                                "align" => "center"
-                            ],[
-                                "type" => "text",
-                                "text" => "次數",
-                                "align" => "center"
-                            ],[
-                                "type" => "text",
-                                "text" => "得分",
-                                "align" => "center"
+                ],
+                "body" => [
+                    "type" => "box",
+                    "layout" => "vertical",
+                    "contents" => [
+                        [
+                            "type" => "box",
+                            "layout" => "horizontal",
+                            "contents" => [
+                                [
+                                    "type" => "text",
+                                    "text" => "玩家",
+                                    "align" => "center"
+                                ],[
+                                    "type" => "text",
+                                    "text" => "次數",
+                                    "align" => "center"
+                                ],[
+                                    "type" => "text",
+                                    "text" => "得分",
+                                    "align" => "center"
+                                ]
                             ]
                         ]
                     ]
                 ]
             ];
+            foreach ($scoreboard["player"] as $player) {
+                $flexContent["body"]["contents"][] = [
+                    "type" => "box",
+                    "layout" => "horizontal",
+                    "contents" => [
+                        [
+                            "type" => "text",
+                            "text" => $player["name"],
+                            "align" => "center"
+                        ],[
+                            "type" => "text",
+                            "text" => $player["time"],
+                            "align" => "center"
+                        ],[
+                            "type" => "text",
+                            "text" => $player["score"],
+                            "align" => "center"
+                        ]
+                    ]
+                ];
+            }
+            $this->flex("十八啦記分板", $flexContent, "push");
+            if(!empty($scoreboard["bestPlayer"])) {
+                $msgBuilder->clearPrintText();
+                $name = implode("、", $scoreboard["bestPlayer"]);
+                $msgBuilder->addTag("name", $name);
+                if($scoreboard["bestScore"] == 13)
+                    $msgBuilder->addTag("score", $scoreboard["bestScore"]);
+                else
+                    $msgBuilder->addTag("score", _SEPAT["identical"]);
+                $msgBuilder->addPrintText(_SEPAT["best_player"]);
+                $msgBuilder->setEMO("happy");
+                $print = $msgBuilder->buildeMsg();
+                $this->text($print, "push");
+            }
+            if(!empty($scoreboard["BGPlayer"])) {
+                $msgBuilder->clearPrintText();
+                $name = implode("、", $scoreboard["BGPlayer"]);
+                $msgBuilder->addTag("name", $name);
+                $msgBuilder->addPrintText(_SEPAT["BG_player"]);
+                $msgBuilder->setEMO("sad");
+                $print = $msgBuilder->buildeMsg();
+                $this->text($print, "push");
+            }
+            if(!empty($scoreboard["5timesPlayer"])) {
+                $msgBuilder->clearPrintText();
+                $name = implode("、", $scoreboard["5timePlayer"]);
+                $msgBuilder->addTag("name", $name);
+                $msgBuilder->addPrintText(_SEPAT["5time_player"]);
+                $msgBuilder->setEMO("beyond");
+                $print = $msgBuilder->buildeMsg();
+                $this->text($print, "push");
+            }
+            $sepat->disband();
+        }
+        else {
+            $name = "";//nickname->getNickName($userId)
+            $msgBuilder->addTag("name", $name);
+            $msgBuilder->addPrintText(_SEPAT["reject"]);
+            $msgBuilder->setEMO("beyond");
+            $print = $msgBuilder->buildeMsg();
+            $this->text($print);
         }
     }
 /*
@@ -301,7 +380,7 @@ class msgBuilder {
         $this->msg .= $p;
     }
     public function clearPrintText() {
-        $this->msg .= "";
+        $this->msg = "";
     }
     public function setEMO($e) {
         $this->emo = $e;
